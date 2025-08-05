@@ -2,7 +2,9 @@
   "name": "available-slots",
   "description": "Find available time slots from your daily schedule with configurable chunks & breaks.",
   "version": "1.0.0",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "cmplr --type-check",
     "test": "node --test dist/cjs/**/*.test.js"
@@ -11,11 +13,19 @@
     "type": "git",
     "url": "git+https://github.com/bredele/available-slots.git"
   },
-  "keywords": ["schedule", "available", "slots"],
+  "keywords": [
+    "schedule",
+    "available",
+    "slots"
+  ],
   "author": "Olivier Wietrich",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/bredele/available-slots/issues"
   },
-  "homepage": "https://github.com/bredele/available-slots#readme"
+  "homepage": "https://github.com/bredele/available-slots#readme",
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "cmplr": "^1.3.0"
+  }
 }
