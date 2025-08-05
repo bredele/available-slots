@@ -11,28 +11,47 @@ export interface SlotsOptions {
   endTime?: string;
 }
 
+type NumericSlot = {
+  start: number;
+  end: number;
+};
+
 /**
  * Converts time in HH:MM format to total minutes since midnight.
  * This makes time calculations and comparisons much easier to work with.
  */
 
 const timeToMinutes = (time: string): number => {
-  const [hours, minutes] = time.split(":").map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
   return hours * 60 + minutes;
 };
 
 /**
+ * Ensure proper zero-padding for consistent time string formatting.
+ */
+
+const zeroPadding = (time: number): string => {
+  return String(time).padStart(2, '0');
+};
+
+/**
  * Converts total minutes since midnight back to HH:MM time format.
- * Ensures proper zero-padding for consistent time string formatting.
  */
 
 const minutesToTime = (minutes: number): string => {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
-  return `${hours.toString().padStart(2, "0")}:${mins
-    .toString()
-    .padStart(2, "0")}`;
+  return `${zeroPadding(hours)}:${zeroPadding(mins)}`;
 };
+
+/**
+ * Creates a time slot from start time in minutes and duration.
+ * Helper function to reduce duplication in slot creation.
+ */
+const createSlot = (startMinutes: number, slotSize: number): TimeSlot => ({
+  start: minutesToTime(startMinutes),
+  end: minutesToTime(startMinutes + slotSize),
+});
 
 /**
  * Consolidates overlapping or adjacent busy time periods into single merged slots.
@@ -50,9 +69,9 @@ const mergeOverlappingSlots = (slots: TimeSlot[]): TimeSlot[] => {
     }))
     .sort((a, b) => a.start - b.start);
 
-  const merged: { start: number; end: number }[] = [sortedSlots[0]];
+  const merged: NumericSlot[] = [sortedSlots[0]];
 
-  for (let i = 1; i < sortedSlots.length; i++) {
+  for (let i = 1, l = sortedSlots.length; i < l; i++) {
     const current = sortedSlots[i];
     const last = merged[merged.length - 1];
 
@@ -94,20 +113,14 @@ const generateAvailableSlots = (
 
   for (const busySlot of busyInMinutes) {
     while (currentTime + slotSize <= busySlot.start) {
-      available.push({
-        start: minutesToTime(currentTime),
-        end: minutesToTime(currentTime + slotSize),
-      });
+      available.push(createSlot(currentTime, slotSize));
       currentTime += totalSlotTime;
     }
     currentTime = Math.max(currentTime, busySlot.end);
   }
 
   while (currentTime + slotSize <= endTime) {
-    available.push({
-      start: minutesToTime(currentTime),
-      end: minutesToTime(currentTime + slotSize),
-    });
+    available.push(createSlot(currentTime, slotSize));
     currentTime += totalSlotTime;
   }
 
@@ -125,24 +138,14 @@ const slots = (options: SlotsOptions): TimeSlot[] => {
     busy,
     slotSize = 30,
     breakTime = 0,
-    startTime = "08:00",
-    endTime = "18:00",
+    startTime = '08:00',
+    endTime = '18:00',
   } = options;
 
   const startMinutes = timeToMinutes(startTime);
   const endMinutes = timeToMinutes(endTime);
-
-  if (busy.length === 0) {
-    return generateAvailableSlots(
-      [],
-      startMinutes,
-      endMinutes,
-      slotSize,
-      breakTime
-    );
-  }
-
   const mergedBusy = mergeOverlappingSlots(busy);
+
   return generateAvailableSlots(
     mergedBusy,
     startMinutes,
